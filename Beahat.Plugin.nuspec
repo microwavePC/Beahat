@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata minClientVersion="2.8.3">
+		<id>Plugin.Beahat</id>
+		<version>0.1.1</version>
+		<title>Beahat Plugin for Xamarin</title>
+		<authors>microwavePC</authors>
+		<owners>microwavePC</owners>
+    <licenseUrl>https://creativecommons.org/publicdomain/zero/1.0/deed</licenseUrl>
+    <projectUrl>https://github.com/microwavePC</projectUrl>
+    <iconUrl>https://avatars0.githubusercontent.com/u/22116470</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>
+      Xamarin plugin to handle iBeacon detection and trigger any event.
+    </description>
+		<summary>Xamarin plugin to handle iBeacon detection and trigger any event.</summary>
+		<tags>Xamarin, iBeacon, UWP, Android, Xamarin.Forms, iOS</tags>
+		<dependencies>
+			<group targetFramework="MonoAndroid">
+			</group>
+			<group targetFramework="Xamarin.iOS10">
+			</group>
+			<group targetFramework="uap">
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<!--Core-->
+		<file src="Beahat\Plugin.Beahat\bin\Release\Plugin.Beahat.dll" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.dll" />
+		<file src="Beahat\Plugin.Beahat\bin\Release\Plugin.Beahat.xml" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.xml" />
+		<file src="Beahat\Plugin.Beahat\bin\Release\Plugin.Beahat.pdb" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.pdb" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.dll" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.Abstractions.dll" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.xml" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.Abstractions.xml" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.pdb" target="lib\portable-net45+wp8+wpa81+win8+MonoAndroid10+MonoTouch10+Xamarin.iOS10+UAP10\Plugin.Beahat.Abstractions.pdb" />		
+
+		<!--Xamarin.Android-->
+		<file src="Beahat\Plugin.Beahat.Android\bin\Release\Plugin.Beahat.dll" target="lib\MonoAndroid10\Plugin.Beahat.dll" />
+		<file src="Beahat\Plugin.Beahat.Android\bin\Release\Plugin.Beahat.xml" target="lib\MonoAndroid10\Plugin.Beahat.xml" />
+		<file src="Beahat\Plugin.Beahat.Android\bin\Release\Plugin.Beahat.pdb" target="lib\MonoAndroid10\Plugin.Beahat.pdb" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.dll" target="lib\MonoAndroid10\Plugin.Beahat.Abstractions.dll" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.xml" target="lib\MonoAndroid10\Plugin.Beahat.Abstractions.xml" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.pdb" target="lib\MonoAndroid10\Plugin.Beahat.Abstractions.pdb" />
+
+		<!--Xamarin.iOS-->
+		<file src="Beahat\Plugin.Beahat.iOS\bin\iPhone\Release\Plugin.Beahat.dll" target="lib\Xamarin.iOS10\Plugin.Beahat.dll" />
+		<file src="Beahat\Plugin.Beahat.iOS\bin\iPhone\Release\Plugin.Beahat.xml" target="lib\Xamarin.iOS10\Plugin.Beahat.xml" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.dll" target="lib\Xamarin.iOS10\Plugin.Beahat.Abstractions.dll" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.xml" target="lib\Xamarin.iOS10\Plugin.Beahat.Abstractions.xml" />
+
+		<!--uap-->
+		<file src="Beahat\Plugin.Beahat.UWP\bin\Release\Plugin.Beahat.dll" target="lib\UAP10\Plugin.Beahat.dll" />
+		<file src="Beahat\Plugin.Beahat.UWP\bin\Release\Plugin.Beahat.xml" target="lib\UAP10\Plugin.Beahat.xml" />
+		<file src="Beahat\Plugin.Beahat.UWP\bin\Release\Plugin.Beahat.pdb" target="lib\UAP10\Plugin.Beahat.pdb" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.dll" target="lib\UAP10\Plugin.Beahat.Abstractions.dll" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.xml" target="lib\UAP10\Plugin.Beahat.Abstractions.xml" />
+		<file src="Beahat\Plugin.Beahat.Abstractions\bin\Release\Plugin.Beahat.Abstractions.pdb" target="lib\UAP10\Plugin.Beahat.Abstractions.pdb" />
+	</files>
+</package>

@@ -77,15 +77,7 @@ namespace Plugin.Beahat
 			{
 				// 5.0以上はこちら
 				_scanCallbackNew = new BleScanCallback();
-				try
-				{
-					// [エラー回避] 端末がBluetoothをサポートしていない場合、_btAdapterはnullになる。
-					_bleScanner = _btAdapter.BluetoothLeScanner;
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex.Message);
-				}
+				_bleScanner = _btAdapter?.BluetoothLeScanner;
 			}
 		}
 
@@ -202,7 +194,10 @@ namespace Plugin.Beahat
 			if (OS_VER < BuildVersionCodes.Lollipop)
 			{
 				_scanCallbackOld.DetectedBeaconDict = new Dictionary<string, iBeacon>();
+
+				#pragma warning disable CS0618 // Type or member is obsolete
 				_btAdapter.StartLeScan(_scanCallbackOld);
+				#pragma warning restore CS0618 // Type or member is obsolete
 			}
 			else
 			{
@@ -226,7 +221,9 @@ namespace Plugin.Beahat
 
 			if (OS_VER < BuildVersionCodes.Lollipop)
 			{
+				#pragma warning disable CS0618 // Type or member is obsolete
 				_btAdapter.StopLeScan(_scanCallbackOld);
+				#pragma warning disable CS0618 // Type or member is obsolete
 			}
 			else
 			{

@@ -28,7 +28,7 @@ namespace Plugin.Beahat
 
         public List<iBeacon> DetectedBeaconList
         {
-            get { return new List<iBeacon>(_detectedBeaconDict.Values); }
+            get { return new List<iBeacon>(_detectedBeaconDict?.Values); }
         }
 
         #endregion
@@ -58,6 +58,8 @@ namespace Plugin.Beahat
             _canUseLocation = true;
             _bluetoothAvailabilityChecker = new CBCentralManager();
             _bluetoothAvailability = CBCentralManagerState.Unknown;
+
+            _locationManager.DidRangeBeacons += didRangeBeacons;
 
             _locationAvailabilityChecker.RangingBeaconsDidFailForRegion += (s, e) =>
             {
@@ -194,7 +196,6 @@ namespace Plugin.Beahat
             }
 
             _detectedBeaconDict = new Dictionary<string, iBeacon>();
-            _locationManager.DidRangeBeacons += didRangeBeacons;
 
             foreach (var eventHolder in _beaconEventHolderDict)
             {
@@ -268,7 +269,10 @@ namespace Plugin.Beahat
                 else
                 {
                     eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
-                    eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+					if (detectedBeacon.Accuracy > 0.0)
+					{
+                    	eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+					}
                     _detectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
                 }
 

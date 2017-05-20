@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             x:Class="BeahatTutorial.Views.MainPage"
+             Title="MainPage">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Key="ButtonStyle" TargetType="Button">
+                <Setter Property="BorderColor" Value="Silver"/>
+                <Setter Property="BorderWidth" Value="1"/>
+                <Setter Property="Margin" Value="1"/>
+                <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
+                <Setter Property="VerticalOptions" Value="FillAndExpand"/>
+            </Style>
+            <Style x:Key="LabelStyle" TargetType="Label">
+                <Setter Property="HorizontalTextAlignment" Value="Start"/>
+                <Setter Property="VerticalTextAlignment" Value="End"/>
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <StackLayout HorizontalOptions="Center" VerticalOptions="Center">
+        <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+            <Grid.Margin>
+                <OnPlatform x:TypeArguments="Thickness"
+							iOS="40,20,40,10"
+							Android="40,10,40,10"
+                            WinPhone="20,10,20,60"/>
+            </Grid.Margin>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="4*"/>
+                <RowDefinition/>
+                <RowDefinition Height="3*"/>
+                <RowDefinition Height="3*"/>
+            </Grid.RowDefinitions>
+
+            <!-- スキャン実行状況表示欄 -->
+            <Label Grid.Row="0" Text="iBeacon スキャン中" BackgroundColor="Yellow"
+				   TextColor="Black" FontSize="24" FontAttributes="Bold"
+				   HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
+				   HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+				   Margin="-40,0,-40,0" IsVisible="{Binding IsScanning}"/>
+
+            <!-- UUID設定 -->
+            <Entry Grid.Row="1" Keyboard="Url" Placeholder="UUID" Text="{Binding UuidStr}"/>
+
+            <!-- MAJOR設定 -->
+            <Entry Grid.Row="2" Keyboard="Numeric" Placeholder="MAJOR" Text="{Binding MajorStr}"/>
+
+            <!-- MINOR設定 -->
+            <Entry Grid.Row="3" Keyboard="Numeric" Placeholder="MINOR" Text="{Binding MinorStr}"/>
+
+            <!-- 下限RSSI設定 -->
+            <Grid Grid.Row="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0"
+					   Text="{Binding ThresholdRssi, StringFormat='イベント発火の最低RSSI：{0:N0}'}"
+					   Style="{StaticResource LabelStyle}">
+                    <Label.Margin>
+                        <OnPlatform x:TypeArguments="Thickness"
+                                    WinPhone="0,0,0,-12"/>
+                    </Label.Margin>
+                </Label>
+                <Slider Grid.Row="1" Minimum="-100" Maximum="-30" Value="{Binding ThresholdRssi}">
+                    <Slider.Margin>
+                        <OnPlatform x:TypeArguments="Thickness"
+									iOS="0"
+									Android="-10,5,-10,0"
+                                    WinPhone="0,0,0,-8"/>
+                    </Slider.Margin>
+                </Slider>
+            </Grid>
+
+            <!-- 実行間隔設定 -->
+            <Grid Grid.Row="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0"
+					   Text="{Binding TimeIntervalSec, StringFormat='イベント再発火までの時間：{0:N0}秒'}"
+					   Style="{StaticResource LabelStyle}">
+                    <Label.Margin>
+                        <OnPlatform x:TypeArguments="Thickness"
+                                    WinPhone="0,0,0,-12"/>
+                    </Label.Margin>
+                </Label>
+                <Slider Grid.Row="1" Maximum="60" Minimum="1" Value="{Binding TimeIntervalSec}">
+                    <Slider.Margin>
+                        <OnPlatform x:TypeArguments="Thickness"
+									iOS="0"
+									Android="-10,5,-10,0"
+                                    WinPhone="0,0,0,-8"/>
+                    </Slider.Margin>
+                </Slider>
+            </Grid>
+
+            <!-- イベント設定 -->
+            <Grid Grid.Row="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Text="イベントの種類"
+					   Style="{StaticResource LabelStyle}"/>
+                <Picker Grid.Row="1" SelectedIndex="{Binding EventIndex}">
+                    <Picker.Items>
+                        <x:String>アラートを表示</x:String>
+                        <!--x:String>バイブレーション</x:String-->
+                    </Picker.Items>
+                </Picker>
+            </Grid>
+
+            <!-- イベント追加ボタン & イベント全削除ボタン -->
+            <Grid Grid.Row="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Text="イベント追加"
+						Style="{StaticResource ButtonStyle}"
+						Command="{Binding AddEventCommand}"/>
+                <Button Grid.Column="1" Text="イベント全削除"
+						Style="{StaticResource ButtonStyle}"
+						Command="{Binding ClearAllEventCommand}"/>
+            </Grid>
+
+            <!-- スキャン開始ボタン & スキャン停止ボタン -->
+            <Grid Grid.Row="9">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Text="スキャン開始"
+						Style="{StaticResource ButtonStyle}"
+						Command="{Binding StartScanCommand}"/>
+                <Button Grid.Column="1" Text="スキャン停止"
+						Style="{StaticResource ButtonStyle}"
+						Command="{Binding StopScanCommand}"/>
+            </Grid>
+
+        </Grid>
+    </StackLayout>
+
+</ContentPage>

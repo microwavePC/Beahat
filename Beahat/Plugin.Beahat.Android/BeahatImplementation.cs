@@ -287,14 +287,17 @@ namespace Plugin.Beahat
 					if (rssiPrev == null || ((short)rssiPrev < rssi))
 					{
 						eventHolder.ibeacon.Rssi = (short)rssi;
-						DetectedBeaconDict[beaconIdentifier] = eventHolder.ibeacon;
+                        eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
+                        eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
+                        DetectedBeaconDict[beaconIdentifier] = eventHolder.ibeacon;
 					}
 				}
 				else
 				{
 					eventHolder.ibeacon.Rssi = (short)rssi;
 					eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
-					DetectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
+                    eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
+                    DetectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
 				}
 
 				foreach (var eventDetail in eventHolder.EventList)

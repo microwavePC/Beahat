@@ -249,11 +249,11 @@ namespace Plugin.Beahat
 
                 if (!_beaconEventHolderDict.ContainsKey(beaconIdentifier))
                 {
-                    return;
+                    continue;
                 }
 
                 iBeaconEventHolder eventHolder = _beaconEventHolderDict[beaconIdentifier];
-
+                
                 if (_detectedBeaconDict.ContainsKey(beaconIdentifier))
                 {
                     iBeacon detectedBeaconPrev = _detectedBeaconDict[beaconIdentifier];
@@ -262,17 +262,20 @@ namespace Plugin.Beahat
                     if (rssiPrev == null || ((short)rssiPrev < detectedBeacon.Rssi))
                     {
                         eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
-                        eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+                        if (detectedBeacon.Accuracy > 0.0)
+                        {
+                            eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+                        }
                         _detectedBeaconDict[beaconIdentifier] = eventHolder.ibeacon;
                     }
                 }
                 else
                 {
                     eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
-					if (detectedBeacon.Accuracy > 0.0)
-					{
-                    	eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
-					}
+                    if (detectedBeacon.Accuracy > 0.0)
+                    {
+                        eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+                    }
                     _detectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
                 }
 

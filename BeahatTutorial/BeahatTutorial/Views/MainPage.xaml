@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
@@ -26,8 +26,8 @@
         <Grid HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
             <Grid.Margin>
                 <OnPlatform x:TypeArguments="Thickness"
-							iOS="40,20,40,10"
-							Android="40,10,40,10"
+							iOS="12,20,12,10"
+							Android="12,10,12,10"
                             WinPhone="20,10,20,60"/>
             </Grid.Margin>
             <Grid.RowDefinitions>
@@ -44,7 +44,7 @@
             </Grid.RowDefinitions>
 
             <!-- スキャン実行状況表示欄 -->
-            <Label Grid.Row="0" Text="iBeacon スキャン中" BackgroundColor="Yellow"
+            <Label Grid.Row="0" Text="Scanning iBeacon" BackgroundColor="Yellow"
 				   TextColor="Black" FontSize="24" FontAttributes="Bold"
 				   HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"
 				   HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
@@ -66,7 +66,8 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0"
-					   Text="{Binding ThresholdRssi, StringFormat='イベント発火の最低RSSI：{0:N0}'}"
+                       FontSize="14"
+					   Text="{Binding ThresholdRssi, StringFormat='Threshold RSSI for triggering event：{0:N0}'}"
 					   Style="{StaticResource LabelStyle}">
                     <Label.Margin>
                         <OnPlatform x:TypeArguments="Thickness"
@@ -90,7 +91,8 @@
                     <RowDefinition/>
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0"
-					   Text="{Binding TimeIntervalSec, StringFormat='イベント再発火までの時間：{0:N0}秒'}"
+                       FontSize="14"
+					   Text="{Binding TimeIntervalSec, StringFormat='Time interval for re-triggering event：{0:N0} sec'}"
 					   Style="{StaticResource LabelStyle}">
                     <Label.Margin>
                         <OnPlatform x:TypeArguments="Thickness"
@@ -113,12 +115,13 @@
                     <RowDefinition/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
-                <Label Grid.Row="0" Text="イベントの種類"
+                <Label Grid.Row="0" Text="Event type"
 					   Style="{StaticResource LabelStyle}"/>
                 <Picker Grid.Row="1" SelectedIndex="{Binding EventIndex}">
                     <Picker.Items>
-                        <x:String>アラートを表示</x:String>
-                        <!--x:String>バイブレーション</x:String-->
+                        <x:String>Dislay alert</x:String>
+                        <x:String>Do nothing (only detectiong)</x:String>
+                        <!--x:String>Vibrate device</x:String-->
                     </Picker.Items>
                 </Picker>
             </Grid>
@@ -129,10 +132,10 @@
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Text="イベント追加"
+                <Button Grid.Column="0" Text="ADD EVENT"
 						Style="{StaticResource ButtonStyle}"
 						Command="{Binding AddEventCommand}"/>
-                <Button Grid.Column="1" Text="イベント全削除"
+                <Button Grid.Column="1" Text="DELETE ALL EVENT"
 						Style="{StaticResource ButtonStyle}"
 						Command="{Binding ClearAllEventCommand}"/>
             </Grid>
@@ -143,10 +146,10 @@
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Text="スキャン開始"
+                <Button Grid.Column="0" Text="START SCAN"
 						Style="{StaticResource ButtonStyle}"
 						Command="{Binding StartScanCommand}"/>
-                <Button Grid.Column="1" Text="スキャン停止"
+                <Button Grid.Column="1" Text="STOP SCAN"
 						Style="{StaticResource ButtonStyle}"
 						Command="{Binding StopScanCommand}"/>
             </Grid>

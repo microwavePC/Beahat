@@ -1,4 +1,4 @@
-﻿using CoreBluetooth;
+﻿﻿using CoreBluetooth;
 using CoreLocation;
 using Foundation;
 using Plugin.Beahat;
@@ -26,10 +26,15 @@ namespace Plugin.Beahat
             set { SetProperty(ref _isScanning, value); }
         }
 
-        public List<iBeacon> DetectedBeaconList
+        public List<iBeacon> DetectedBeaconListFromClosestApproachedInfo
         {
-            get { return new List<iBeacon>(_detectedBeaconDict?.Values); }
-        }
+            get { return new List<iBeacon>(_detectedBeaconDictFromClosestApproachedInfo?.Values); }
+		}
+
+		public List<iBeacon> DetectedBeaconListFromLastApproachedInfo
+		{
+			get { return new List<iBeacon>(_detectedBeaconDictFromLastApproachedInfo?.Values); }
+		}
 
         #endregion
         
@@ -37,7 +42,8 @@ namespace Plugin.Beahat
         #region FIELDS
 
         private Dictionary<string, iBeaconEventHolder> _beaconEventHolderDict;
-        private Dictionary<string, iBeacon> _detectedBeaconDict;
+		private Dictionary<string, iBeacon> _detectedBeaconDictFromClosestApproachedInfo;
+		private Dictionary<string, iBeacon> _detectedBeaconDictFromLastApproachedInfo;
         private CLLocationManager _locationManager;
         private CLLocationManager _locationAvailabilityChecker;
         private bool _canUseLocation;
@@ -52,7 +58,8 @@ namespace Plugin.Beahat
         public BeahatImplementation()
         {
             _beaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-            _detectedBeaconDict = new Dictionary<string, iBeacon>();
+            _detectedBeaconDictFromClosestApproachedInfo = new Dictionary<string, iBeacon>();
+            _detectedBeaconDictFromLastApproachedInfo = new Dictionary<string, iBeacon>();
             _locationManager = new CLLocationManager();
             _locationAvailabilityChecker = new CLLocationManager();
             _canUseLocation = true;
@@ -80,9 +87,16 @@ namespace Plugin.Beahat
                 {
                     case CLAuthorizationStatus.AuthorizedAlways:
                     case CLAuthorizationStatus.AuthorizedWhenInUse:
+                        // 位置情報の取得が常時許可されている
+                        // 位置情報の取得がアプリ使用時のみ許可されている
                         _canUseLocation = true;
-                        return;
-                    case CLAuthorizationStatus.Denied:
+						return;
+					case CLAuthorizationStatus.NotDetermined:
+					case CLAuthorizationStatus.Denied:
+					case CLAuthorizationStatus.Restricted:
+                        // 位置情報の使用許可に関して、まだ選択がされていない
+                        // 位置情報サービスが無効にされている
+                        // 位置情報サービスを利用できない
                         _canUseLocation = false;
                         return;
                     default:
@@ -101,7 +115,7 @@ namespace Plugin.Beahat
 
         #region PUBLIC METHODS
 
-        public bool BluetoothIsAvailableOnThisDevice()
+        public bool IsAvailableToUseBluetoothOnThisDevice()
         {
             bool locationServiceSupported = CLLocationManager.IsMonitoringAvailable(typeof(CLBeaconRegion));
             bool bluetoothSupported = !(_bluetoothAvailability == CBCentralManagerState.Unsupported);
@@ -110,30 +124,41 @@ namespace Plugin.Beahat
         }
 
 
-        public bool BluetoothIsEnableOnThisDevice()
+        public bool IsEnableToUseBluetoothOnThisDevice()
         {
-            if (!BluetoothIsAvailableOnThisDevice())
+            if (!IsAvailableToUseBluetoothOnThisDevice())
             {
                 return false;
             }
 
-            return _canUseLocation && (_bluetoothAvailability == CBCentralManagerState.PoweredOn);
+            return (_bluetoothAvailability == CBCentralManagerState.PoweredOn);
+        }
+
+
+        public bool IsEnableToUseLocationServiceForDetectingBeacons()
+        {
+            return _canUseLocation;
         }
 
 
         public void RequestUserToTurnOnBluetooth()
         {
-            if (!BluetoothIsAvailableOnThisDevice())
+            if (!IsAvailableToUseBluetoothOnThisDevice())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
 
-            new CLLocationManager().RequestWhenInUseAuthorization();
-            new CBCentralManager(null, null, new CBCentralInitOptions() { ShowPowerAlert = true });
-        }
+			new CBCentralManager(null, null, new CBCentralInitOptions() { ShowPowerAlert = true });
+		}
 
 
-        public void AddEvent(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action func)
+		public void RequestUserToAllowUsingLocationServiceForDetectingBeacons()
+		{
+			new CLLocationManager().RequestWhenInUseAuthorization();
+		}
+
+
+        public void AddObservableBeaconWithCallback(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action func)
         {
             iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, minor);
 
@@ -153,7 +178,47 @@ namespace Plugin.Beahat
         }
 
 
-        public void AddEvent(Guid uuid, ushort major, ushort minor)
+        public void AddObservableBeaconWithCallback(Guid uuid, ushort major, short thresholdRssi, int intervalMilliSec, Action func)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, null);
+
+            if (!_beaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+            {
+                _beaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+            }
+
+            _beaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, func);
+
+            if (IsScanning)
+            {
+                var nsUuid = new NSUuid(uuid.ToString());
+                var beaconRegion = new CLBeaconRegion(nsUuid, major, eventHolder.BeaconIdentifyStr);
+                _locationManager.StartRangingBeacons(beaconRegion);
+            }
+        }
+
+
+        public void AddObservableBeaconWithCallback(Guid uuid, short thresholdRssi, int intervalMilliSec, Action func)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, null, null);
+
+            if (!_beaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+            {
+                _beaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+            }
+
+            _beaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, func);
+
+            if (IsScanning)
+            {
+                var nsUuid = new NSUuid(uuid.ToString());
+                var beaconRegion = new CLBeaconRegion(nsUuid, eventHolder.BeaconIdentifyStr);
+                _locationManager.StartRangingBeacons(beaconRegion);
+            }
+        }
+
+
+        public void AddObservableBeacon(Guid uuid, ushort major, ushort minor)
         {
             iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, minor);
 
@@ -171,23 +236,70 @@ namespace Plugin.Beahat
         }
 
 
-        public void ClearAllEvent()
+        public void AddObservableBeacon(Guid uuid, ushort major)
         {
-            _beaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-            _detectedBeaconDict = new Dictionary<string, iBeacon>();
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, null);
+
+            if (!_beaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+            {
+                _beaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+            }
+
+            if (IsScanning)
+            {
+                var nsUuid = new NSUuid(uuid.ToString());
+                var beaconRegion = new CLBeaconRegion(nsUuid, major, eventHolder.BeaconIdentifyStr);
+                _locationManager.StartRangingBeacons(beaconRegion);
+            }
+        }
+
+
+        public void AddObservableBeacon(Guid uuid)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, null, null);
+
+            if (!_beaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+            {
+                _beaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+            }
+
+            if (IsScanning)
+            {
+                var nsUuid = new NSUuid(uuid.ToString());
+                var beaconRegion = new CLBeaconRegion(nsUuid, eventHolder.BeaconIdentifyStr);
+                _locationManager.StartRangingBeacons(beaconRegion);
+            }
+        }
+
+
+        public void ClearAllObservableBeacons()
+        {
+            _beaconEventHolderDict.Clear();
+        }
+
+
+        public void InitializeDetectedBeaconList()
+		{
+			_detectedBeaconDictFromClosestApproachedInfo.Clear();
+			_detectedBeaconDictFromLastApproachedInfo.Clear();
         }
 
 
         public void StartScan()
         {
-            if (!BluetoothIsAvailableOnThisDevice())
+            if (!IsAvailableToUseBluetoothOnThisDevice())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
 
-            if (!CLLocationManager.RegionMonitoringEnabled)
+            if (!IsEnableToUseBluetoothOnThisDevice())
             {
                 throw new BluetoothTurnedOffException("Bluetooth service on this device is turned off.");
+            }
+            
+            if (!IsEnableToUseLocationServiceForDetectingBeacons())
+            {
+                throw new LocationServiceNotAllowedException("Location service is not allowed for this device or app.");
             }
 
             if (IsScanning)
@@ -195,15 +307,28 @@ namespace Plugin.Beahat
                 return;
             }
 
-            _detectedBeaconDict = new Dictionary<string, iBeacon>();
-
             foreach (var eventHolder in _beaconEventHolderDict)
             {
-                var uuid = new NSUuid(eventHolder.Value.ibeacon.Uuid.ToString());
-                var beaconRegion = new CLBeaconRegion(uuid,
-                                                      eventHolder.Value.ibeacon.Major,
-                                                      eventHolder.Value.ibeacon.Minor,
-                                                      eventHolder.Value.BeaconIdentifyStr);
+                iBeacon targetBeacon = eventHolder.Value.ibeacon;
+
+                var uuid = new NSUuid(targetBeacon.Uuid.ToString());
+                ushort? major = targetBeacon.Major;
+                ushort? minor = targetBeacon.Minor;
+
+                CLBeaconRegion beaconRegion;
+
+                if (major.HasValue && minor.HasValue)
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, (ushort)major, (ushort)minor, eventHolder.Value.BeaconIdentifyStr);
+                }
+                else if (major.HasValue)
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, (ushort)major, eventHolder.Value.BeaconIdentifyStr);
+                }
+                else
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, eventHolder.Value.BeaconIdentifyStr);
+                }
 
                 _locationManager.StartRangingBeacons(beaconRegion);
             }
@@ -221,11 +346,26 @@ namespace Plugin.Beahat
 
             foreach (var eventHolder in _beaconEventHolderDict)
             {
-                var uuid = new NSUuid(eventHolder.Value.ibeacon.Uuid.ToString());
-                var beaconRegion = new CLBeaconRegion(uuid,
-                                                      eventHolder.Value.ibeacon.Major,
-                                                      eventHolder.Value.ibeacon.Minor,
-                                                      eventHolder.Value.BeaconIdentifyStr);
+                iBeacon targetBeacon = eventHolder.Value.ibeacon;
+
+                var uuid = new NSUuid(targetBeacon.Uuid.ToString());
+                ushort? major = targetBeacon.Major;
+                ushort? minor = targetBeacon.Minor;
+
+                CLBeaconRegion beaconRegion;
+
+                if (major.HasValue && minor.HasValue)
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, (ushort)major, (ushort)minor, eventHolder.Value.BeaconIdentifyStr);
+                }
+                else if (major.HasValue)
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, (ushort)major, eventHolder.Value.BeaconIdentifyStr);
+                }
+                else
+                {
+                    beaconRegion = new CLBeaconRegion(uuid, eventHolder.Value.BeaconIdentifyStr);
+                }
 
                 _locationManager.StopRangingBeacons(beaconRegion);
             }
@@ -247,46 +387,95 @@ namespace Plugin.Beahat
                     detectedBeacon.Major.UInt16Value,
                     detectedBeacon.Minor.UInt16Value);
 
-                if (!_beaconEventHolderDict.ContainsKey(beaconIdentifier))
+                string beaconIdentifierForNoMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(
+                    new Guid(detectedBeacon.ProximityUuid.AsString().ToUpper()),
+                    detectedBeacon.Major.UInt16Value, null);
+
+                string beaconIdentifierForNoMajorMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(
+                    new Guid(detectedBeacon.ProximityUuid.AsString().ToUpper()), null, null);
+
+                if (!_beaconEventHolderDict.ContainsKey(beaconIdentifier) &&
+                    !_beaconEventHolderDict.ContainsKey(beaconIdentifierForNoMinor) &&
+                    !_beaconEventHolderDict.ContainsKey(beaconIdentifierForNoMajorMinor))
                 {
                     continue;
                 }
 
-                iBeaconEventHolder eventHolder = _beaconEventHolderDict[beaconIdentifier];
-                
-                if (_detectedBeaconDict.ContainsKey(beaconIdentifier))
-                {
-                    iBeacon detectedBeaconPrev = _detectedBeaconDict[beaconIdentifier];
-                    short? rssiPrev = detectedBeaconPrev.Rssi;
+                string[] beaconIdentifierArray = { beaconIdentifier,
+                                                   beaconIdentifierForNoMinor,
+                                                   beaconIdentifierForNoMajorMinor };
 
-                    if (rssiPrev == null || ((short)rssiPrev < detectedBeacon.Rssi))
+                foreach (var beaconId in beaconIdentifierArray)
+				{
+					iBeaconEventHolder eventHolder = null;
+					if (_beaconEventHolderDict.ContainsKey(beaconId))
+					{
+						eventHolder = _beaconEventHolderDict[beaconId];
+					}
+					else
+					{
+						continue;
+					}
+
+					if (_detectedBeaconDictFromClosestApproachedInfo.ContainsKey(beaconIdentifier))
+					{
+						iBeacon detectedBeaconPrev = _detectedBeaconDictFromClosestApproachedInfo[beaconIdentifier];
+						short? rssiPrev = detectedBeaconPrev.Rssi;
+
+						if (rssiPrev == null || ((short)rssiPrev < detectedBeacon.Rssi))
+						{
+							eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
+							if (detectedBeacon.Accuracy > 0.0)
+							{
+								eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+							}
+							_detectedBeaconDictFromClosestApproachedInfo[beaconIdentifier] = eventHolder.ibeacon;
+						}
+					}
+					else
+					{
+						eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
+						if (detectedBeacon.Accuracy > 0.0)
+						{
+							eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+						}
+						_detectedBeaconDictFromClosestApproachedInfo.Add(beaconIdentifier, eventHolder.ibeacon);
+					}
+
+                    if (_detectedBeaconDictFromLastApproachedInfo.ContainsKey(beaconIdentifier))
                     {
-                        eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
-                        if (detectedBeacon.Accuracy > 0.0)
+                        _detectedBeaconDictFromLastApproachedInfo[beaconIdentifier] = new iBeacon()
                         {
-                            eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
-                        }
-                        _detectedBeaconDict[beaconIdentifier] = eventHolder.ibeacon;
+                            Uuid = new Guid(detectedBeacon.ProximityUuid.AsString()),
+                            Major = detectedBeacon.Major.UInt16Value,
+                            Minor = detectedBeacon.Minor.UInt16Value,
+                            Rssi = (short)detectedBeacon.Rssi,
+                            EstimatedDistanceMeter = detectedBeacon.Accuracy
+                        };
                     }
-                }
-                else
-                {
-                    eventHolder.ibeacon.Rssi = (short)detectedBeacon.Rssi;
-                    if (detectedBeacon.Accuracy > 0.0)
+                    else
                     {
-                        eventHolder.ibeacon.EstimatedDistanceMeter = detectedBeacon.Accuracy;
+                        _detectedBeaconDictFromLastApproachedInfo.Add(
+                            beaconIdentifier,
+                            new iBeacon()
+							{
+								Uuid = new Guid(detectedBeacon.ProximityUuid.AsString()),
+								Major = detectedBeacon.Major.UInt16Value,
+								Minor = detectedBeacon.Minor.UInt16Value,
+								Rssi = (short)detectedBeacon.Rssi,
+								EstimatedDistanceMeter = detectedBeacon.Accuracy
+                            });
                     }
-                    _detectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
-                }
 
-                foreach (iBeaconEventDetail eventDetail in eventHolder.EventList)
-                {
-                    if (eventDetail.ThresholdRssi < detectedBeacon.Rssi &&
-                        eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
-                    {
-                        eventDetail.LastTriggeredDateTime = DateTime.Now;
-                        eventDetail.Function();
-                    }
+					foreach (iBeaconEventDetail eventDetail in eventHolder.EventList)
+					{
+						if (eventDetail.ThresholdRssi < detectedBeacon.Rssi &&
+							eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
+						{
+							eventDetail.LastTriggeredDateTime = DateTime.Now;
+							eventDetail.Function();
+						}
+					}
                 }
             }
         }

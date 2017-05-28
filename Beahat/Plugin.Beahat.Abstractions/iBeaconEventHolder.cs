@@ -13,7 +13,7 @@ namespace Plugin.Beahat.Abstractions
         }
 
 
-        public iBeaconEventHolder(Guid uuid, ushort major, ushort minor)
+        public iBeaconEventHolder(Guid uuid, ushort? major, ushort? minor)
         {
             ibeacon = new iBeacon()
             {
@@ -30,14 +30,18 @@ namespace Plugin.Beahat.Abstractions
             EventList.Add(eventDetail);
         }
 
-        public static string GenerateBeaconIdentifyStr(Guid uuid, ushort major, ushort minor)
+        public static string GenerateBeaconIdentifyStr(Guid uuid, ushort? major, ushort? minor)
         {
-            return uuid.ToString().ToUpper() + "_" + major.ToString() + "_" + minor.ToString();
+            string majorStr, minorStr;
+            majorStr = major.HasValue ? major.ToString() : "x";
+            minorStr = minor.HasValue ? minor.ToString() : "x";
+
+            return uuid.ToString().ToUpper() + "_" + majorStr + "_" + minorStr;
         }
 
         public static string GenerateBeaconIdentifyStr(iBeacon ibeacon)
         {
-            return ibeacon.Uuid.ToString().ToUpper() + "_" + ibeacon.Major.ToString() + "_" + ibeacon.Minor.ToString();
+            return GenerateBeaconIdentifyStr(ibeacon.Uuid, ibeacon.Major, ibeacon.Minor);
         }
     }
 }

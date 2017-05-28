@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Plugin.Beahat.UWP")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright ©  2017 microwavePC Freedom to take away and re-use without asking prior permission.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

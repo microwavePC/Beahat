@@ -12,57 +12,33 @@ namespace Plugin.Beahat.Abstractions
 		/// </summary>
 		public Guid Uuid { get; set; }
 
-		/// <summary>
-		/// iBeaconのMAJOR値
-		/// </summary>
-		public ushort Major { get; set; }
+        /// <summary>
+        /// iBeaconのMAJOR値
+        /// </summary>
+        public ushort? Major { get; set; } = null;
 
 		/// <summary>
 		/// iBeaconのMINOR値
 		/// </summary>
-		public ushort Minor { get; set; }
+		public ushort? Minor { get; set; } = null;
 
-		/// <summary>
-		/// 測定された電波強度（RSSI）
-		/// </summary>
-		private short? _rssi = null;
-		public short? Rssi
-		{
-			get { return _rssi; }
-			set
-			{
-				_rssi = value;
-			}
-		}
+        /// <summary>
+        /// 測定された電波強度（RSSI）
+        /// </summary>
+        public short? Rssi { get; set; } = null;
 
-		/// <summary>
-		/// 発信電波強度（TxPower）
-		/// iOSの場合は検知不可。
-		/// </summary>
-		private short? _txPower = null;
-		public short? TxPower
-		{
-			get { return _txPower; }
-			set
-			{
-				_txPower = value;
-			}
-		}
+        /// <summary>
+        /// 発信電波強度（TxPower）
+        /// iOSの場合は検知不可。
+        /// </summary>
+        public short? TxPower { get; set; } = null;
 
-		/// <summary>
-		/// iBeaconと端末の推定距離（単位はメートル）。
-		/// </summary>
-		private double? _estimatedDistanceMeter = null;
-		public double? EstimatedDistanceMeter
-		{
-			get { return _estimatedDistanceMeter; }
-			set
-			{
-				_estimatedDistanceMeter = value;
-			}
-		}
+        /// <summary>
+        /// iBeaconと端末の推定距離（単位はメートル）。
+        /// </summary>
+        public double? EstimatedDistanceMeter { get; set; } = null;
 
-		#endregion
+        #endregion
 
-	}
+    }
 }

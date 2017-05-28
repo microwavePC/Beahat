@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata minClientVersion="2.8.3">
 		<id>Plugin.Beahat</id>
-		<version>0.2.3</version>
+		<version>0.3.0</version>
 		<title>Beahat Plugin for Xamarin</title>
 		<authors>microwavePC</authors>
 		<owners>microwavePC</owners>
@@ -11,7 +11,7 @@
     <iconUrl>https://avatars1.githubusercontent.com/u/22116470</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>
-      Xamarin plugin for handling iBeacon detection and triggering any event.
+      Xamarin plugin for handling iBeacon detection and triggering any event as you like. iBeacon is trademarks or registered trademarks of Apple Inc.
     </description>
 		<summary>Xamarin plugin for handling iBeacon detection and triggering any event.</summary>
 		<tags>Xamarin, iBeacon, UWP, Android, Xamarin.Forms, iOS</tags>

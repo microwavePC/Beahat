@@ -1,4 +1,4 @@
-﻿using Plugin.Beahat.Abstractions;
+﻿﻿using Plugin.Beahat.Abstractions;
 using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Navigation;
@@ -6,6 +6,8 @@ using Prism.Services;
 using System;
 using System.ComponentModel;
 using System.Windows.Input;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace BeahatTutorial.ViewModels
 {
@@ -14,21 +16,21 @@ namespace BeahatTutorial.ViewModels
 
         #region PROPERTIES
 
-        private string _uuidStr = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+        private string _uuidStr = "FDA50693-A4E2-4FB1-AFCF-C6EB07647825";
         public string UuidStr
         {
             get { return _uuidStr; }
             set { SetProperty(ref _uuidStr, value); }
         }
 
-        private string _majorStr = "";
+        private string _majorStr = "10";
         public string MajorStr
         {
             get { return _majorStr; }
             set { SetProperty(ref _majorStr, value); }
         }
 
-        private string _minorStr = "";
+        private string _minorStr = "7";
         public string MinorStr
         {
             get { return _minorStr; }
@@ -97,7 +99,7 @@ namespace BeahatTutorial.ViewModels
 
             AddEventCommand = new DelegateCommand(addEvent);
             ClearAllEventCommand = new DelegateCommand(clearAllEvent);
-            StartScanCommand = new DelegateCommand(startScan);
+            StartScanCommand = new DelegateCommand(async () => await startScanAsync());
             StopScanCommand = new DelegateCommand(stopScan);
         }
 
@@ -112,8 +114,8 @@ namespace BeahatTutorial.ViewModels
         }
 
         public void OnNavigatedTo(NavigationParameters parameters)
-        {
-            _beahat.AddEvent(new Guid(UuidStr), ushort.Parse(MajorStr), ushort.Parse(MinorStr));
+		{
+            
         }
 
         public void OnNavigatingTo(NavigationParameters parameters)
@@ -132,20 +134,24 @@ namespace BeahatTutorial.ViewModels
 
             if (!isValidUuid())
             {
-                errorMessage += "UUIDの入力値が不正です。" + Environment.NewLine;
+                errorMessage += "Invalid UUID format." + Environment.NewLine;
             }
-            if (!isValidMajor())
+            if (!string.IsNullOrEmpty(MajorStr) && !isValidMajor())
             {
-                errorMessage += "MAJORには1〜65535の範囲の整数を入力してください。" + Environment.NewLine;
+                errorMessage += "MAJOR value should be integral number ranging from 1 and 65535." + Environment.NewLine;
             }
-            if (!isValidMinor())
+            if (!string.IsNullOrEmpty(MinorStr) && !isValidMinor())
             {
-                errorMessage += "MINORには1〜65535の範囲の整数を入力してください。" + Environment.NewLine;
+                errorMessage += "MINOR value should be integral number ranging from 1 and 65535." + Environment.NewLine;
+            }
+            if (string.IsNullOrEmpty(MajorStr) && !string.IsNullOrEmpty(MinorStr))
+            {
+                errorMessage += "Cannot designate MINOR value only, except MAJOR value designating." + Environment.NewLine;
             }
 
             if (errorMessage != string.Empty)
             {
-                _pageDialogService.DisplayAlertAsync("エラー",
+                _pageDialogService.DisplayAlertAsync("ERROR",
                                                      errorMessage,
                                                      "OK");
                 return;
@@ -158,55 +164,141 @@ namespace BeahatTutorial.ViewModels
                     targetEvent = showAlert;
                     break;
                 case 1:
+                    targetEvent = null;
+                    break;
+                case 2:
                     targetEvent = vibrate;
                     break;
                 default:
                     return;
             }
 
-            _beahat.AddEvent(new Guid(UuidStr),
-                                                 ushort.Parse(MajorStr),
-                                                 ushort.Parse(MinorStr),
-                                                 ThresholdRssi,
-                                                 TimeIntervalSec * 1000,
-                                                 targetEvent);
+            if (string.IsNullOrEmpty(MajorStr) && string.IsNullOrEmpty(MinorStr))
+            {
+                if (targetEvent == null)
+				{
+					_beahat.AddObservableBeacon(new Guid(UuidStr));
+                }
+                else
+				{
+					_beahat.AddObservableBeaconWithCallback(new Guid(UuidStr),
+									 ThresholdRssi,
+									 TimeIntervalSec * 1000,
+									 targetEvent);
+                }
+            }
+            else if (string.IsNullOrEmpty(MinorStr))
+            {
+                if (targetEvent == null)
+                {
+                    _beahat.AddObservableBeacon(new Guid(UuidStr),
+                                     ushort.Parse(MajorStr));
+                }
+                else
+                {
+                    _beahat.AddObservableBeaconWithCallback(new Guid(UuidStr),
+                                     ushort.Parse(MajorStr),
+                                     ThresholdRssi,
+                                     TimeIntervalSec * 1000,
+                                     targetEvent);
+                }
+            }
+            else
+            {
+                if (targetEvent == null)
+                {
+                    _beahat.AddObservableBeacon(new Guid(UuidStr),
+                                     ushort.Parse(MajorStr),
+                                     ushort.Parse(MinorStr));
+                }
+                else
+                {
+                    _beahat.AddObservableBeaconWithCallback(new Guid(UuidStr),
+                                     ushort.Parse(MajorStr),
+                                     ushort.Parse(MinorStr),
+                                     ThresholdRssi,
+                                     TimeIntervalSec * 1000,
+                                     targetEvent);
+                }
+            }
 
             _pageDialogService.DisplayAlertAsync("BeahatTutorial",
-                                                 "イベントを追加しました。",
+                                                 "Added an event.",
                                                  "OK");
         }
+
 
         private void clearAllEvent()
         {
-            _beahat.ClearAllEvent();
-
+            _beahat.ClearAllObservableBeacons();
             _pageDialogService.DisplayAlertAsync("BeahatTutorial",
-                                                 "イベントを削除しました。",
+                                                 "Deleted all event.",
                                                  "OK");
         }
 
 
-        private void startScan()
+        private async Task startScanAsync()
         {
-            if (!_beahat.BluetoothIsAvailableOnThisDevice())
+            if (!_beahat.IsAvailableToUseBluetoothOnThisDevice())
             {
-                _pageDialogService.DisplayAlertAsync("BeahatTutorial",
-                                                     "この端末はBluetoothをサポートしていません。",
-                                                     "OK");
+                await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
+                                                           "This device does not support Bluetooth." + Environment.NewLine +
+                                                           "Cannot start scanning on this device.",
+                                                           "OK");
                 return;
             }
-
-            if (!_beahat.BluetoothIsEnableOnThisDevice())
+            
+            if (!_beahat.IsEnableToUseBluetoothOnThisDevice())
             {
-                _pageDialogService.DisplayAlertAsync("BeahatTutorial",
-                                                     "端末のBluetooth利用設定がオフにされています。" + Environment.NewLine +
-                                                     "Bluetoothの利用設定をオンにしてください。",
-                                                     "OK");
+                await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
+                                                           "Bluetooth is turned off on this device." + Environment.NewLine +
+                                                           "To start scanning, turn on Bluetooth.",
+                                                           "OK");
                 _beahat.RequestUserToTurnOnBluetooth();
                 return;
             }
+            
+            if (!_beahat.IsEnableToUseLocationServiceForDetectingBeacons())
+            {
+				await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
+														   "Location service is not enabled." + Environment.NewLine +
+														   "To start scanning, switch the permission setting.",
+														   "OK");
+				_beahat.RequestUserToAllowUsingLocationServiceForDetectingBeacons();
+                return;
+            }
 
-            _beahat.StartScan();
+            _beahat.InitializeDetectedBeaconList();
+
+            try
+			{
+				_beahat.StartScan();
+            }
+            catch(BluetoothUnsupportedException ex1)
+			{
+				Debug.WriteLine(ex1.Message);
+				await _pageDialogService.DisplayAlertAsync("ERROR",
+														   "Cannot start scanning because this device does not support Bluetooth.",
+														   "OK");
+            }
+            catch(BluetoothTurnedOffException ex2)
+            {
+                Debug.WriteLine(ex2.Message);
+				await _pageDialogService.DisplayAlertAsync("ERROR",
+														   "Cannot start scanning because Bluetooth is turned off." + Environment.NewLine +
+														   "Please turn on it to start scanning.",
+														   "OK");
+				_beahat.RequestUserToTurnOnBluetooth();
+            }
+            catch(LocationServiceNotAllowedException ex3)
+			{
+				Debug.WriteLine(ex3.Message);
+				await _pageDialogService.DisplayAlertAsync("ERROR",
+														   "Location service is not enabled." + Environment.NewLine +
+														   "Please turn it enable to start scanning.",
+														   "OK");
+				_beahat.RequestUserToAllowUsingLocationServiceForDetectingBeacons();
+            }
         }
 
 
@@ -214,26 +306,26 @@ namespace BeahatTutorial.ViewModels
         {
             _beahat.StopScan();
 
-            string message = "スキャンを終了しました。" + Environment.NewLine;
-            if (_beahat.DetectedBeaconList.Count == 0)
+            string message = "Finished scanning." + Environment.NewLine;
+            if (_beahat.DetectedBeaconListFromClosestApproachedInfo.Count == 0)
             {
-                message += "iBeaconは見つかりませんでした。";
+                message += "iBeacon not found.";
             }
             else
             {
-                message += "以下のiBeaconが見つかりました。" + Environment.NewLine;
+                message += "Found iBeacons below:" + Environment.NewLine;
                 message += "-------------------------------" + Environment.NewLine;
 
                 int beaconCount = 0;
-                foreach (var beacon in _beahat.DetectedBeaconList)
+                foreach (var beacon in _beahat.DetectedBeaconListFromClosestApproachedInfo)
                 {
                     beaconCount++;
-                    message += "■■■ " + beaconCount + " ■■■" + Environment.NewLine;
+                    message += "//////// " + beaconCount + " ////////" + Environment.NewLine;
                     message += "UUID : " + beacon.Uuid.ToString().ToUpper() + Environment.NewLine;
                     message += "MAJOR : " + beacon.Major + Environment.NewLine;
                     message += "MINOR : " + beacon.Minor + Environment.NewLine;
-                    message += "最大RSSI : " + beacon.Rssi + Environment.NewLine;
-                    message += "推定距離 : " + beacon.EstimatedDistanceMeter + "m";
+                    message += "Max RSSI : " + beacon.Rssi + Environment.NewLine;
+                    message += "Distance : " + beacon.EstimatedDistanceMeter + "m";
                 }
             }
 

@@ -1,4 +1,4 @@
-﻿using Android.App;
+﻿﻿using Android.App;
 using Android.Bluetooth;
 using Android.Bluetooth.LE;
 using Android.Content;
@@ -28,20 +28,35 @@ namespace Plugin.Beahat
 			set { SetProperty(ref _isScanning, value); }
 		}
 
-		public List<iBeacon> DetectedBeaconList
+		public List<iBeacon> DetectedBeaconListFromClosestApproachedInfo
 		{
 			get
 			{
 				if (OS_VER < BuildVersionCodes.Lollipop)
 				{
-					return new List<iBeacon>(_scanCallbackOld.DetectedBeaconDict.Values);
+					return new List<iBeacon>(_scanCallbackOld.DetectedBeaconDictFromClosestApproachedInfo.Values);
 				}
 				else
 				{
-					return new List<iBeacon>(_scanCallbackNew.DetectedBeaconDict.Values);
+					return new List<iBeacon>(_scanCallbackNew.DetectedBeaconDictFromClosestApproachedInfo.Values);
 				}
 			}
 		}
+
+		public List<iBeacon> DetectedBeaconListFromLastApproachedInfo
+        {
+            get
+			{
+				if (OS_VER < BuildVersionCodes.Lollipop)
+				{
+					return new List<iBeacon>(_scanCallbackOld.DetectedBeaconDictFromLastApproachedInfo.Values);
+				}
+				else
+				{
+					return new List<iBeacon>(_scanCallbackNew.DetectedBeaconDictFromLastApproachedInfo.Values);
+				}
+            }
+        }
 
 		#endregion
 
@@ -86,15 +101,15 @@ namespace Plugin.Beahat
 
 		#region PUBLIC METHODS
 
-		public bool BluetoothIsAvailableOnThisDevice()
+        public bool IsAvailableToUseBluetoothOnThisDevice()
 		{
 			return !(_btAdapter == null);
 		}
 
 
-		public bool BluetoothIsEnableOnThisDevice()
+        public bool IsEnableToUseBluetoothOnThisDevice()
 		{
-			if (!BluetoothIsAvailableOnThisDevice())
+			if (!IsAvailableToUseBluetoothOnThisDevice())
 			{
 				return false;
 			}
@@ -103,9 +118,21 @@ namespace Plugin.Beahat
 		}
 
 
+        public bool IsEnableToUseLocationServiceForDetectingBeacons()
+        {
+            return true;
+        }
+
+
+        public void RequestUserToAllowUsingLocationServiceForDetectingBeacons()
+        {
+            // Do nothing on Android.
+        }
+
+
 		public void RequestUserToTurnOnBluetooth()
 		{
-			if (!BluetoothIsAvailableOnThisDevice())
+			if (!IsAvailableToUseBluetoothOnThisDevice())
 			{
 				throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
 			}
@@ -115,7 +142,7 @@ namespace Plugin.Beahat
 		}
 
 
-		public void AddEvent(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action function)
+		public void AddObservableBeaconWithCallback(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action function)
 		{
 			iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, minor);
 
@@ -135,10 +162,56 @@ namespace Plugin.Beahat
 				}
 				_scanCallbackNew.BeaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, function);
 			}
-		}
+        }
 
 
-		public void AddEvent(Guid uuid, ushort major, ushort minor)
+        public void AddObservableBeaconWithCallback(Guid uuid, ushort major, short thresholdRssi, int intervalMilliSec, Action function)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, null);
+
+            if (OS_VER < BuildVersionCodes.Lollipop)
+            {
+                if (!_scanCallbackOld.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackOld.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+                _scanCallbackOld.BeaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, function);
+            }
+            else
+            {
+                if (!_scanCallbackNew.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackNew.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+                _scanCallbackNew.BeaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, function);
+            }
+        }
+
+
+        public void AddObservableBeaconWithCallback(Guid uuid, short thresholdRssi, int intervalMilliSec, Action function)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, null, null);
+
+            if (OS_VER < BuildVersionCodes.Lollipop)
+            {
+                if (!_scanCallbackOld.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackOld.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+                _scanCallbackOld.BeaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, function);
+            }
+            else
+            {
+                if (!_scanCallbackNew.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackNew.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+                _scanCallbackNew.BeaconEventHolderDict[eventHolder.BeaconIdentifyStr].AddEvent(thresholdRssi, intervalMilliSec, function);
+            }
+        }
+
+
+        public void AddObservableBeacon(Guid uuid, ushort major, ushort minor)
 		{
 			iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, minor);
 
@@ -156,32 +229,87 @@ namespace Plugin.Beahat
 					_scanCallbackNew.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
 				}
 			}
-		}
+        }
 
 
-		public void ClearAllEvent()
+        public void AddObservableBeacon(Guid uuid, ushort major)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, major, null);
+
+            if (OS_VER < BuildVersionCodes.Lollipop)
+            {
+                if (!_scanCallbackOld.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackOld.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+            }
+            else
+            {
+                if (!_scanCallbackNew.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackNew.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+            }
+        }
+
+
+        public void AddObservableBeacon(Guid uuid)
+        {
+            iBeaconEventHolder eventHolder = new iBeaconEventHolder(uuid, null, null);
+
+            if (OS_VER < BuildVersionCodes.Lollipop)
+            {
+                if (!_scanCallbackOld.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackOld.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+            }
+            else
+            {
+                if (!_scanCallbackNew.BeaconEventHolderDict.ContainsKey(eventHolder.BeaconIdentifyStr))
+                {
+                    _scanCallbackNew.BeaconEventHolderDict.Add(eventHolder.BeaconIdentifyStr, eventHolder);
+                }
+            }
+        }
+
+
+        public void ClearAllObservableBeacons()
 		{
 			if (OS_VER < BuildVersionCodes.Lollipop)
 			{
-				_scanCallbackOld.BeaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-				_scanCallbackOld.DetectedBeaconDict = new Dictionary<string, iBeacon>();
+                _scanCallbackOld.BeaconEventHolderDict.Clear();
 			}
 			else
 			{
-				_scanCallbackNew.BeaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-				_scanCallbackNew.DetectedBeaconDict = new Dictionary<string, iBeacon>();
+                _scanCallbackNew.BeaconEventHolderDict.Clear();
 			}
 		}
+
+
+		public void InitializeDetectedBeaconList()
+		{
+			if (OS_VER < BuildVersionCodes.Lollipop)
+			{
+                _scanCallbackOld.DetectedBeaconDictFromClosestApproachedInfo.Clear();
+                _scanCallbackOld.DetectedBeaconDictFromLastApproachedInfo.Clear();
+			}
+			else
+			{
+				_scanCallbackNew.DetectedBeaconDictFromClosestApproachedInfo.Clear();
+				_scanCallbackNew.DetectedBeaconDictFromLastApproachedInfo.Clear();
+			}
+        }
 
 
 		public void StartScan()
 		{
-			if (!BluetoothIsAvailableOnThisDevice())
+			if (!IsAvailableToUseBluetoothOnThisDevice())
 			{
 				throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
 			}
 
-			if (!BluetoothIsEnableOnThisDevice())
+			if (!IsEnableToUseBluetoothOnThisDevice())
 			{
 				throw new BluetoothTurnedOffException("Bluetooth service on this device is turned off.");
 			}
@@ -193,11 +321,9 @@ namespace Plugin.Beahat
 
 			if (OS_VER < BuildVersionCodes.Lollipop)
 			{
-				_scanCallbackOld.DetectedBeaconDict = new Dictionary<string, iBeacon>();
-
-				#pragma warning disable CS0618 // Type or member is obsolete
+                #pragma warning disable CS0618 // Type or member is obsolete
 				_btAdapter.StartLeScan(_scanCallbackOld);
-				#pragma warning restore CS0618 // Type or member is obsolete
+                #pragma warning restore CS0618 // Type or member is obsolete
 			}
 			else
 			{
@@ -205,7 +331,6 @@ namespace Plugin.Beahat
 				{
 					_bleScanner = _btAdapter.BluetoothLeScanner;
 				}
-				_scanCallbackNew.DetectedBeaconDict = new Dictionary<string, iBeacon>();
 				_bleScanner.StartScan(_scanCallbackNew);
 			}
 			IsScanning = true;
@@ -221,9 +346,9 @@ namespace Plugin.Beahat
 
 			if (OS_VER < BuildVersionCodes.Lollipop)
 			{
-				#pragma warning disable CS0618 // Type or member is obsolete
+                #pragma warning disable CS0618 // Type or member is obsolete
 				_btAdapter.StopLeScan(_scanCallbackOld);
-				#pragma warning disable CS0618 // Type or member is obsolete
+                #pragma warning disable CS0618 // Type or member is obsolete
 			}
 			else
 			{
@@ -246,7 +371,8 @@ namespace Plugin.Beahat
 		#region PROPERTIES
 
 		public Dictionary<string, iBeaconEventHolder> BeaconEventHolderDict { get; set; }
-		public Dictionary<string, iBeacon> DetectedBeaconDict { get; set; }
+		public Dictionary<string, iBeacon> DetectedBeaconDictFromClosestApproachedInfo { get; set; }
+        public Dictionary<string, iBeacon> DetectedBeaconDictFromLastApproachedInfo { get; set; }
 
 		#endregion
 
@@ -256,13 +382,16 @@ namespace Plugin.Beahat
 		public LeScanCallback()
 		{
 			BeaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-			DetectedBeaconDict = new Dictionary<string, iBeacon>();
+			DetectedBeaconDictFromClosestApproachedInfo = new Dictionary<string, iBeacon>();
+            DetectedBeaconDictFromLastApproachedInfo = new Dictionary<string, iBeacon>();
 		}
 
-		#endregion
+        #endregion
 
 
-		public void OnLeScan(BluetoothDevice device, int rssi, byte[] scanRecord)
+        #region EVENT HANDLER
+
+        public void OnLeScan(BluetoothDevice device, int rssi, byte[] scanRecord)
 		{
 			if (iBeaconDroidUtility.IsIBeacon(scanRecord))
 			{
@@ -271,47 +400,100 @@ namespace Plugin.Beahat
 				ushort minor = iBeaconDroidUtility.GetMinorFromRecord(scanRecord);
 
 				string beaconIdentifier = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, major, minor);
+				string beaconIdentifierForNoMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, major, null);
+				string beaconIdentifierForNoMajorMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, null, null);
 
-				if (!BeaconEventHolderDict.ContainsKey(beaconIdentifier))
+				if (!BeaconEventHolderDict.ContainsKey(beaconIdentifier) &&
+					!BeaconEventHolderDict.ContainsKey(beaconIdentifierForNoMinor) &&
+					!BeaconEventHolderDict.ContainsKey(beaconIdentifierForNoMajorMinor))
 				{
 					return;
 				}
 
-				iBeaconEventHolder eventHolder = BeaconEventHolderDict[beaconIdentifier];
+				string[] beaconIdentifierArray = { beaconIdentifier,
+												   beaconIdentifierForNoMinor,
+												   beaconIdentifierForNoMajorMinor };
 
-				if (DetectedBeaconDict.ContainsKey(beaconIdentifier))
+                foreach (var beaconId in beaconIdentifierArray)
 				{
-					iBeacon detectedBeaconPrev = DetectedBeaconDict[beaconIdentifier];
-					short? rssiPrev = detectedBeaconPrev.Rssi;
+					iBeaconEventHolder eventHolder = null;
+					if (BeaconEventHolderDict.ContainsKey(beaconId))
+					{
+						eventHolder = BeaconEventHolderDict[beaconId];
+					}
+					else
+					{
+						continue;
+					}
 
-					if (rssiPrev == null || ((short)rssiPrev < rssi))
+					if (DetectedBeaconDictFromClosestApproachedInfo.ContainsKey(beaconIdentifier))
+					{
+						iBeacon detectedBeaconPrev = DetectedBeaconDictFromClosestApproachedInfo[beaconIdentifier];
+						short? rssiPrev = detectedBeaconPrev.Rssi;
+
+						if (rssiPrev == null || ((short)rssiPrev < rssi))
+						{
+							eventHolder.ibeacon.Rssi = (short)rssi;
+							eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
+							eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
+							DetectedBeaconDictFromClosestApproachedInfo[beaconIdentifier] = eventHolder.ibeacon;
+						}
+					}
+					else
 					{
 						eventHolder.ibeacon.Rssi = (short)rssi;
-                        eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
-                        eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
-                        DetectedBeaconDict[beaconIdentifier] = eventHolder.ibeacon;
+						eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
+						eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
+						DetectedBeaconDictFromClosestApproachedInfo.Add(beaconIdentifier, eventHolder.ibeacon);
 					}
-				}
-				else
-				{
-					eventHolder.ibeacon.Rssi = (short)rssi;
-					eventHolder.ibeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord);
-                    eventHolder.ibeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(eventHolder.ibeacon.Rssi, eventHolder.ibeacon.TxPower);
-                    DetectedBeaconDict.Add(beaconIdentifier, eventHolder.ibeacon);
-				}
 
-				foreach (var eventDetail in eventHolder.EventList)
-				{
-					if (eventDetail.ThresholdRssi < rssi &&
-						eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
+                    if (DetectedBeaconDictFromLastApproachedInfo.ContainsKey(beaconIdentifier))
 					{
-						eventDetail.LastTriggeredDateTime = DateTime.Now;
-						eventDetail.Function();
+						var thisBeacon = new iBeacon()
+						{
+							Uuid = uuid,
+							Major = major,
+							Minor = minor,
+							Rssi = (short)rssi,
+							TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord),
+							EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(
+                                (short)rssi,
+                                iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord))
+						};
+                        DetectedBeaconDictFromLastApproachedInfo[beaconIdentifier] = thisBeacon;
+                    }
+                    else
+					{
+                        var thisBeacon = new iBeacon()
+                        {
+                            Uuid = uuid,
+                            Major = major,
+                            Minor = minor,
+                            Rssi = (short)rssi,
+							TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord),
+							EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(
+                                (short)rssi,
+                                iBeaconDroidUtility.GetTxPowerFromRecord(scanRecord))
+                        };
+						DetectedBeaconDictFromLastApproachedInfo.Add(beaconIdentifier, thisBeacon);
+                    }
+
+					foreach (var eventDetail in eventHolder.EventList)
+					{
+						if (eventDetail.ThresholdRssi < rssi &&
+							eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
+						{
+							eventDetail.LastTriggeredDateTime = DateTime.Now;
+							eventDetail.Function();
+						}
 					}
-				}
+                }
 			}
 		}
-	}
+
+        #endregion
+
+    }
 
 	#endregion
 
@@ -324,7 +506,8 @@ namespace Plugin.Beahat
 		#region PROPERTIES
 
 		public Dictionary<string, iBeaconEventHolder> BeaconEventHolderDict { get; set; }
-		public Dictionary<string, iBeacon> DetectedBeaconDict { get; set; }
+		public Dictionary<string, iBeacon> DetectedBeaconDictFromClosestApproachedInfo { get; set; }
+		public Dictionary<string, iBeacon> DetectedBeaconDictFromLastApproachedInfo { get; set; }
 
 		#endregion
 
@@ -334,13 +517,14 @@ namespace Plugin.Beahat
 		public BleScanCallback()
 		{
 			BeaconEventHolderDict = new Dictionary<string, iBeaconEventHolder>();
-			DetectedBeaconDict = new Dictionary<string, iBeacon>();
+			DetectedBeaconDictFromClosestApproachedInfo = new Dictionary<string, iBeacon>();
+            DetectedBeaconDictFromLastApproachedInfo = new Dictionary<string, iBeacon>();
 		}
 
 		#endregion
 
 
-		#region OVERRIDE METHODS
+		#region EVENT HANDLER
 
 		public override void OnScanResult(ScanCallbackType callbackType, ScanResult result)
 		{
@@ -353,45 +537,96 @@ namespace Plugin.Beahat
 				ushort minor = iBeaconDroidUtility.GetMinorFromRecord(result.ScanRecord);
 
 				string beaconIdentifier = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, major, minor);
+				string beaconIdentifierForNoMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, major, null);
+                string beaconIdentifierForNoMajorMinor = iBeaconEventHolder.GenerateBeaconIdentifyStr(uuid, null, null);
 
-				if (!BeaconEventHolderDict.ContainsKey(beaconIdentifier))
+				if (!BeaconEventHolderDict.ContainsKey(beaconIdentifier) &&
+					!BeaconEventHolderDict.ContainsKey(beaconIdentifierForNoMinor) &&
+					!BeaconEventHolderDict.ContainsKey(beaconIdentifierForNoMajorMinor))
 				{
 					return;
 				}
 
-				iBeaconEventHolder eventHolder = BeaconEventHolderDict[beaconIdentifier];
-				iBeacon holdBeacon = eventHolder.ibeacon;
+				string[] beaconIdentifierArray = { beaconIdentifier,
+												   beaconIdentifierForNoMinor,
+												   beaconIdentifierForNoMajorMinor };
 
-				if (DetectedBeaconDict.ContainsKey(beaconIdentifier))
-				{
-					iBeacon detectedBeaconPrev = DetectedBeaconDict[beaconIdentifier];
-					short? rssiPrev = detectedBeaconPrev.Rssi;
+                foreach (var beaconId in beaconIdentifierArray)
+                {
+                    iBeaconEventHolder eventHolder = null;
+                    if (BeaconEventHolderDict.ContainsKey(beaconId))
+                    {
+                        eventHolder = BeaconEventHolderDict[beaconId];
+                    }
+                    else
+                    {
+                        continue;
+                    }
 
-					if (rssiPrev == null || ((short)rssiPrev < result.Rssi))
+					iBeacon holdBeacon = eventHolder.ibeacon;
+
+					if (DetectedBeaconDictFromClosestApproachedInfo.ContainsKey(beaconIdentifier))
+					{
+						iBeacon detectedBeaconPrev = DetectedBeaconDictFromClosestApproachedInfo[beaconIdentifier];
+						short? rssiPrev = detectedBeaconPrev.Rssi;
+
+						if (rssiPrev == null || ((short)rssiPrev < result.Rssi))
+						{
+							holdBeacon.Rssi = (short)result.Rssi;
+							holdBeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord);
+							holdBeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(holdBeacon.Rssi, holdBeacon.TxPower);
+							DetectedBeaconDictFromClosestApproachedInfo[beaconIdentifier] = holdBeacon;
+						}
+					}
+					else
 					{
 						holdBeacon.Rssi = (short)result.Rssi;
 						holdBeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord);
 						holdBeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(holdBeacon.Rssi, holdBeacon.TxPower);
-						DetectedBeaconDict[beaconIdentifier] = holdBeacon;
+						DetectedBeaconDictFromClosestApproachedInfo.Add(beaconIdentifier, holdBeacon);
 					}
-				}
-				else
-				{
-					holdBeacon.Rssi = (short)result.Rssi;
-					holdBeacon.TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord);
-					holdBeacon.EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(holdBeacon.Rssi, holdBeacon.TxPower);
-					DetectedBeaconDict.Add(beaconIdentifier, holdBeacon);
-				}
 
-				foreach (var eventDetail in eventHolder.EventList)
-				{
-					if (eventDetail.ThresholdRssi < result.Rssi &&
-						eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
+					if (DetectedBeaconDictFromLastApproachedInfo.ContainsKey(beaconIdentifier))
 					{
-						eventDetail.LastTriggeredDateTime = DateTime.Now;
-						eventDetail.Function();
+						var thisBeacon = new iBeacon()
+						{
+							Uuid = uuid,
+							Major = major,
+							Minor = minor,
+							Rssi = (short)result.Rssi,
+							TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord),
+							EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(
+                                (short)result.Rssi,
+                                iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord))
+						};
+						DetectedBeaconDictFromLastApproachedInfo[beaconIdentifier] = thisBeacon;
 					}
-				}
+					else
+					{
+						var thisBeacon = new iBeacon()
+						{
+							Uuid = uuid,
+							Major = major,
+							Minor = minor,
+							Rssi = (short)result.Rssi,
+							TxPower = iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord),
+							EstimatedDistanceMeter = iBeaconDroidUtility.CalcDistanceMeterFromRssiAndTxPower(
+								(short)result.Rssi,
+								iBeaconDroidUtility.GetTxPowerFromRecord(result.ScanRecord))
+						};
+						DetectedBeaconDictFromLastApproachedInfo.Add(beaconIdentifier, thisBeacon);
+					}
+
+					foreach (var eventDetail in eventHolder.EventList)
+					{
+						if (eventDetail.ThresholdRssi < result.Rssi &&
+							eventDetail.LastTriggeredDateTime < DateTime.Now.AddMilliseconds(-1 * eventDetail.EventTriggerIntervalMilliSec))
+						{
+							eventDetail.LastTriggeredDateTime = DateTime.Now;
+							eventDetail.Function();
+						}
+					}
+                }
 			}
 		}
 

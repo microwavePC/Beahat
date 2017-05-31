@@ -28,7 +28,7 @@ namespace Plugin.Beahat
 			set { SetProperty(ref _isScanning, value); }
 		}
 
-		public List<iBeacon> DetectedBeaconListFromClosestApproachedInfo
+		public List<iBeacon> BeaconListFromClosestApproachedEvent
 		{
 			get
 			{
@@ -43,7 +43,7 @@ namespace Plugin.Beahat
 			}
 		}
 
-		public List<iBeacon> DetectedBeaconListFromLastApproachedInfo
+		public List<iBeacon> BeaconListFromLastApproachedEvent
         {
             get
 			{
@@ -101,15 +101,15 @@ namespace Plugin.Beahat
 
 		#region PUBLIC METHODS
 
-        public bool IsAvailableToUseBluetoothOnThisDevice()
+        public bool SupportsBluetooth()
 		{
 			return !(_btAdapter == null);
 		}
 
 
-        public bool IsEnableToUseBluetoothOnThisDevice()
+        public bool IsReadyToUseBluetooth()
 		{
-			if (!IsAvailableToUseBluetoothOnThisDevice())
+			if (!SupportsBluetooth())
 			{
 				return false;
 			}
@@ -118,28 +118,28 @@ namespace Plugin.Beahat
 		}
 
 
-        public bool IsEnableToUseLocationServiceForDetectingBeacons()
+        public bool CanUseLocationForDetectBeacons()
         {
             return true;
         }
 
 
-        public void RequestUserToAllowUsingLocationServiceForDetectingBeacons()
+        public void RequestToTurnOnBluetooth()
         {
-            // Do nothing on Android.
+            if (!SupportsBluetooth())
+            {
+                throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
+            }
+
+            Intent btTurnOnIntent = new Intent(BluetoothAdapter.ActionRequestEnable);
+            (Forms.Context as Activity).StartActivity(btTurnOnIntent);
         }
 
 
-		public void RequestUserToTurnOnBluetooth()
-		{
-			if (!IsAvailableToUseBluetoothOnThisDevice())
-			{
-				throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
-			}
-
-			Intent btTurnOnIntent = new Intent(BluetoothAdapter.ActionRequestEnable);
-			(Forms.Context as Activity).StartActivity(btTurnOnIntent);
-		}
+        public void RequestToAllowUsingLocationForDetectBeacons()
+        {
+            // Do nothing on Android.
+        }
 
 
 		public void AddObservableBeaconWithCallback(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action function)
@@ -304,12 +304,12 @@ namespace Plugin.Beahat
 
 		public void StartScan()
 		{
-			if (!IsAvailableToUseBluetoothOnThisDevice())
+			if (!SupportsBluetooth())
 			{
 				throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
 			}
 
-			if (!IsEnableToUseBluetoothOnThisDevice())
+			if (!IsReadyToUseBluetooth())
 			{
 				throw new BluetoothTurnedOffException("Bluetooth service on this device is turned off.");
 			}

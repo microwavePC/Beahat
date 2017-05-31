@@ -26,12 +26,12 @@ namespace Plugin.Beahat
             set { SetProperty(ref _isScanning, value); }
         }
 
-        public List<iBeacon> DetectedBeaconListFromClosestApproachedInfo
+        public List<iBeacon> BeaconListFromClosestApproachedEvent
         {
             get { return new List<iBeacon>(_detectedBeaconDictFromClosestApproachedInfo?.Values); }
 		}
 
-		public List<iBeacon> DetectedBeaconListFromLastApproachedInfo
+		public List<iBeacon> BeaconListFromLastApproachedEvent
 		{
 			get { return new List<iBeacon>(_detectedBeaconDictFromLastApproachedInfo?.Values); }
 		}
@@ -115,7 +115,7 @@ namespace Plugin.Beahat
 
         #region PUBLIC METHODS
 
-        public bool IsAvailableToUseBluetoothOnThisDevice()
+        public bool SupportsBluetooth()
         {
             bool locationServiceSupported = CLLocationManager.IsMonitoringAvailable(typeof(CLBeaconRegion));
             bool bluetoothSupported = !(_bluetoothAvailability == CBCentralManagerState.Unsupported);
@@ -124,9 +124,9 @@ namespace Plugin.Beahat
         }
 
 
-        public bool IsEnableToUseBluetoothOnThisDevice()
+        public bool IsReadyToUseBluetooth()
         {
-            if (!IsAvailableToUseBluetoothOnThisDevice())
+            if (!SupportsBluetooth())
             {
                 return false;
             }
@@ -135,15 +135,15 @@ namespace Plugin.Beahat
         }
 
 
-        public bool IsEnableToUseLocationServiceForDetectingBeacons()
+        public bool CanUseLocationForDetectBeacons()
         {
             return _canUseLocation;
         }
 
 
-        public void RequestUserToTurnOnBluetooth()
+        public void RequestToTurnOnBluetooth()
         {
-            if (!IsAvailableToUseBluetoothOnThisDevice())
+            if (!SupportsBluetooth())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
@@ -152,7 +152,7 @@ namespace Plugin.Beahat
 		}
 
 
-		public void RequestUserToAllowUsingLocationServiceForDetectingBeacons()
+		public void RequestToAllowUsingLocationForDetectBeacons()
 		{
 			new CLLocationManager().RequestWhenInUseAuthorization();
 		}
@@ -287,17 +287,17 @@ namespace Plugin.Beahat
 
         public void StartScan()
         {
-            if (!IsAvailableToUseBluetoothOnThisDevice())
+            if (!SupportsBluetooth())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
 
-            if (!IsEnableToUseBluetoothOnThisDevice())
+            if (!IsReadyToUseBluetooth())
             {
                 throw new BluetoothTurnedOffException("Bluetooth service on this device is turned off.");
             }
             
-            if (!IsEnableToUseLocationServiceForDetectingBeacons())
+            if (!CanUseLocationForDetectBeacons())
             {
                 throw new LocationServiceNotAllowedException("Location service is not allowed for this device or app.");
             }

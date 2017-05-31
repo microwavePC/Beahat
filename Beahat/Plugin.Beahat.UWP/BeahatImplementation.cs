@@ -25,12 +25,12 @@ namespace Plugin.Beahat
             private set { SetProperty(ref _isScanning, value); }
         }
 
-        public List<iBeacon> DetectedBeaconListFromClosestApproachedInfo
+        public List<iBeacon> BeaconListFromClosestApproachedEvent
         {
             get { return new List<iBeacon>(_detectedBeaconDictFromClosestApproachedInfo.Values); }
 		}
 
-		public List<iBeacon> DetectedBeaconListFromLastApproachedInfo
+		public List<iBeacon> BeaconListFromLastApproachedEvent
 		{
 			get { return new List<iBeacon>(_detectedBeaconDictFromLastApproachedInfo.Values); }
 		}
@@ -67,15 +67,15 @@ namespace Plugin.Beahat
 
         #region PUBLIC METHODS
 
-        public bool IsAvailableToUseBluetoothOnThisDevice()
+        public bool SupportsBluetooth()
         {
             return true;
         }
 
 
-        public bool IsEnableToUseBluetoothOnThisDevice()
+        public bool IsReadyToUseBluetooth()
 		{
-			if (!IsAvailableToUseBluetoothOnThisDevice())
+			if (!SupportsBluetooth())
 			{
 				return false;
 			}
@@ -98,25 +98,25 @@ namespace Plugin.Beahat
         }
 
 
-        public bool IsEnableToUseLocationServiceForDetectingBeacons()
+        public bool CanUseLocationForDetectBeacons()
         {
             return true;
-		}
+        }
 
 
-		public void RequestUserToAllowUsingLocationServiceForDetectingBeacons()
-		{
-			// Do nothing on UWP.
-		}
-
-
-        public void RequestUserToTurnOnBluetooth()
+        public void RequestToTurnOnBluetooth()
         {
-            if (!IsAvailableToUseBluetoothOnThisDevice())
+            if (!SupportsBluetooth())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
         }
+
+
+        public void RequestToAllowUsingLocationForDetectBeacons()
+		{
+			// Do nothing on UWP.
+		}
 
 
         public void AddObservableBeaconWithCallback(Guid uuid, ushort major, ushort minor, short thresholdRssi, int intervalMilliSec, Action function)
@@ -203,12 +203,12 @@ namespace Plugin.Beahat
 
         public void StartScan()
         {
-            if (!IsAvailableToUseBluetoothOnThisDevice())
+            if (!SupportsBluetooth())
             {
                 throw new BluetoothUnsupportedException("This device does not support Bluetooth.");
             }
 
-            if (!IsEnableToUseBluetoothOnThisDevice())
+            if (!IsReadyToUseBluetooth())
             {
                 throw new BluetoothTurnedOffException("Bluetooth service on this device is turned off.");
             }

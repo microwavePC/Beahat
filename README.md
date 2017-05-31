@@ -20,9 +20,12 @@ Beahatを使う各プラットフォームのプロジェクトで、以下の�
 
 * **iOS**
 
-  Info.plistで、以下のどちらかのプロパティを追加してください。
-  * Location When In Use Usage Description
-  * Location Always Usage Description Property
+  Info.plistに、以下のどちらかのkeyを追加してください。
+  * NSLocationWhenInUseUsageDescription (Location When In Use Usage Description)
+  * NSLocationAlwaysUsageDescriptionProperty (Location Always Usage Description Property)
+
+  また、Bluetoothのオン/オフを判定する処理を使用するためには、以下のkeyを追加してください。
+  * NSBluetoothPeripheralUsageDescription (Bluetooth Peripheral Usage Description)
 
 * **Android**
 
@@ -32,7 +35,8 @@ Beahatを使う各プラットフォームのプロジェクトで、以下の�
 
 * **UWP**
 
-  Package.appxmanifestの機能タブで、『Bluetooth』のチェックをオンにしてください。
+  Package.appxmanifestの機能タブで、以下の項目のチェックをオンにしてください。
+  * Bluetooth
 
 
 ## サンプルアプリ
@@ -45,30 +49,30 @@ Xamarin.Formsで作成しています。
 
 #### メソッド
 
-* bool **IsAvailableToUseBluetoothOnThisDevice**
+* bool **SupportsBluetooth**
 
   端末がBluetooth機能（iOSの場合は位置情報サービスも含む）をサポートしているかどうかを取得します。<br>
   サポートしている場合はtrue、そうでない場合はfalseを返します。
 
-* bool **IsEnableToUseBluetoothOnThisDevice**
+* bool **IsReadyToUseBluetooth**
 
   端末のBluetooth機能がオンにされているかどうかを取得します。<br>
   端末のBluetooth機能がオンにされている場合はtrue、そうでない場合はfalseを返します。<br>
   端末がBluetoothをサポートしていない場合、常にfalseを返します。
 
-* bool **IsEnableToUseLocationServiceForDetectingBeacons**
+* bool **CanUseLocationForDetectBeacons**
 
   iBeacon検知のために必要な位置情報の使用が許可されているかどうかを取得します。<br>
   位置情報の使用が許可されている場合はtrue、そうでない場合はfalseを返します。<br>
   AndroidとUWPではiBeaconを検知するために位置情報利用の許可が必要ないため、常にtrueを返します。
 
-* void **RequestUserToTurnOnBluetooth**
+* void **RequestToTurnOnBluetooth**
 
   端末のBluetooth機能がオフにされている場合に、端末のBluetooth機能をオンにするためのダイアログを呼び出します。<br>
   UWPでは対応する機能がないため、何も処理は行われません。<br>
   端末がBluetoothをサポートしていない場合、例外BluetoothUnsupportedExceptionをthrowします。
 
-* void **RequestUserToAllowUsingLocationServiceForDetectingBeacons**
+* void **RequestToAllowUsingLocationForDetectBeacons**
 
   位置情報機能がオフにされている、あるいは許可されていない場合に、位置情報の使用許可をユーザーに求めるダイアログを表示します。<br>
   AndroidとUWPではiBeaconを検知するために位置情報利用の許可が必要ないため、何も処理は行われません。
@@ -108,12 +112,12 @@ Xamarin.Formsで作成しています。
 
   スキャン実行中はtrue、スキャン停止中はfalseを返します。
 
-* List\<iBeacon\> **DetectedBeaconListFromClosestApproachedInfo**
+* List\<iBeacon\> **BeaconListFromClosestApproachedEvent**
 
   直近のスキャン、あるいは実行中のスキャンで検出されたiBeaconの情報を持つリストです。<br>
   1種類のiBeaconにつき、1つの要素を持ちます。同じiBeaconを複数回検出した場合、**最も近付いたときの情報**がこのリストに残されます。
 
-* List\<iBeacon\> **DetectedBeaconListFromLastApproachedInfo**
+* List\<iBeacon\> **BeaconListFromLastApproachedEvent**
 
   直近のスキャン、あるいは実行中のスキャンで検出されたiBeaconの情報を持つリストです。<br>
   1種類のiBeaconにつき、1つの要素を持ちます。同じiBeaconを複数回検出した場合、**最後に検出したときの情報**がこのリストに残されます。

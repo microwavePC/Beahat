@@ -239,7 +239,7 @@ namespace BeahatTutorial.ViewModels
 
         private async Task startScanAsync()
         {
-            if (!_beahat.IsAvailableToUseBluetoothOnThisDevice())
+            if (!_beahat.SupportsBluetooth())
             {
                 await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
                                                            "This device does not support Bluetooth." + Environment.NewLine +
@@ -248,23 +248,23 @@ namespace BeahatTutorial.ViewModels
                 return;
             }
             
-            if (!_beahat.IsEnableToUseBluetoothOnThisDevice())
+            if (!_beahat.IsReadyToUseBluetooth())
             {
                 await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
                                                            "Bluetooth is turned off on this device." + Environment.NewLine +
                                                            "To start scanning, turn on Bluetooth.",
                                                            "OK");
-                _beahat.RequestUserToTurnOnBluetooth();
+                _beahat.RequestToTurnOnBluetooth();
                 return;
             }
             
-            if (!_beahat.IsEnableToUseLocationServiceForDetectingBeacons())
+            if (!_beahat.CanUseLocationForDetectBeacons())
             {
 				await _pageDialogService.DisplayAlertAsync("BeahatTutorial",
 														   "Location service is not enabled." + Environment.NewLine +
 														   "To start scanning, switch the permission setting.",
 														   "OK");
-				_beahat.RequestUserToAllowUsingLocationServiceForDetectingBeacons();
+				_beahat.RequestToAllowUsingLocationForDetectBeacons();
                 return;
             }
 
@@ -288,7 +288,7 @@ namespace BeahatTutorial.ViewModels
 														   "Cannot start scanning because Bluetooth is turned off." + Environment.NewLine +
 														   "Please turn on it to start scanning.",
 														   "OK");
-				_beahat.RequestUserToTurnOnBluetooth();
+				_beahat.RequestToTurnOnBluetooth();
             }
             catch(LocationServiceNotAllowedException ex3)
 			{
@@ -297,7 +297,7 @@ namespace BeahatTutorial.ViewModels
 														   "Location service is not enabled." + Environment.NewLine +
 														   "Please turn it enable to start scanning.",
 														   "OK");
-				_beahat.RequestUserToAllowUsingLocationServiceForDetectingBeacons();
+				_beahat.RequestToAllowUsingLocationForDetectBeacons();
             }
         }
 
@@ -307,7 +307,7 @@ namespace BeahatTutorial.ViewModels
             _beahat.StopScan();
 
             string message = "Finished scanning." + Environment.NewLine;
-            if (_beahat.DetectedBeaconListFromClosestApproachedInfo.Count == 0)
+            if (_beahat.BeaconListFromClosestApproachedEvent.Count == 0)
             {
                 message += "iBeacon not found.";
             }
@@ -317,7 +317,7 @@ namespace BeahatTutorial.ViewModels
                 message += "-------------------------------" + Environment.NewLine;
 
                 int beaconCount = 0;
-                foreach (var beacon in _beahat.DetectedBeaconListFromClosestApproachedInfo)
+                foreach (var beacon in _beahat.BeaconListFromClosestApproachedEvent)
                 {
                     beaconCount++;
                     message += "//////// " + beaconCount + " ////////" + Environment.NewLine;

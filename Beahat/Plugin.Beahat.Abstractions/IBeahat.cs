@@ -19,19 +19,19 @@ namespace Plugin.Beahat.Abstractions
 		/// スキャンで検出されたiBeaconの一覧を取得します。
 		/// 検出された各iBeaconについて、最も近接したときの情報を保持します。
 		/// </summary>
-		List<iBeacon> DetectedBeaconListFromClosestApproachedInfo { get; }
+		List<iBeacon> BeaconListFromClosestApproachedEvent { get; }
 
 		/// <summary>
 		/// スキャンで検出されたiBeaconの一覧を取得します。
 		/// 検出された各iBeaconについて、最も直近に検出したときの情報を保持します。
 		/// </summary>
-		List<iBeacon> DetectedBeaconListFromLastApproachedInfo { get; }
+		List<iBeacon> BeaconListFromLastApproachedEvent { get; }
 
 		/// <summary>
 		/// 端末がBluetoothに対応しているかどうかを取得します。
 		/// </summary>
 		/// <returns><c>true</c>対応<c>false</c>非対応</returns>
-        bool IsAvailableToUseBluetoothOnThisDevice();
+        bool SupportsBluetooth();
 
 		/// <summary>
 		/// 端末のBluetooth機能がオンにされているかどうかを取得します。
@@ -39,27 +39,27 @@ namespace Plugin.Beahat.Abstractions
         /// また、端末がBluetoothをサポートしていない場合もfalseを返します。
 		/// </summary>
 		/// <returns><c>true</c>オン<c>false</c>オフ</returns>
-        bool IsEnableToUseBluetoothOnThisDevice();
+        bool IsReadyToUseBluetooth();
 
         /// <summary>
         /// iBeacon検知のために必要な位置情報の使用が許可されているかどうかを取得します。
         /// AndroidとUWPではiBeaconを検知するために位置情報利用の許可が必要ないため、常にtrueが返されます。
         /// </summary>
         /// <returns><c>true</c>許可されている<c>false</c>許可されていない</returns>
-        bool IsEnableToUseLocationServiceForDetectingBeacons();
+        bool CanUseLocationForDetectBeacons();
 
 		/// <summary>
 		/// 端末のBluetooth機能がオフにされている場合に、Bluetooth機能をオンにするためのダイアログを表示します。
 		/// UWPには対応する機能がないため、何もしません。
 		/// 端末がBluetoothに対応していない場合、例外BluetoothUnsupportedExceptionをthrowします。
 		/// </summary>
-        void RequestUserToTurnOnBluetooth();
+        void RequestToTurnOnBluetooth();
 
 		/// <summary>
 		/// 位置情報機能がオフにされている、あるいは許可されていない場合に、iBeaconを検知可能にするための位置情報の使用許可をユーザーに求めるダイアログを表示します。
 		/// AndroidとUWPではiBeaconを検知するために位置情報利用の許可が必要ないため、何もしません。
 		/// </summary>
-		void RequestUserToAllowUsingLocationServiceForDetectingBeacons();
+		void RequestToAllowUsingLocationForDetectBeacons();
 
 		/// <summary>
 		/// 検知対象とするiBeaconと、そのiBeaconを検知したときに実行させる処理を追加します。

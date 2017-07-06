@@ -154,7 +154,7 @@ namespace Plugin.Beahat
 
 		public void RequestToAllowUsingLocationForDetectBeacons()
 		{
-			new CLLocationManager().RequestWhenInUseAuthorization();
+            _locationAvailabilityChecker.RequestWhenInUseAuthorization();
 		}
 
 

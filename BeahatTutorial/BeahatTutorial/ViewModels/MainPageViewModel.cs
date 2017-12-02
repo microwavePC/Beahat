@@ -92,7 +92,7 @@ namespace BeahatTutorial.ViewModels
                                  IPageDialogService pageDialogService)
         {
             _beahat = beahat;
-            //_beahat = Beahat.Current;
+            //_beahat = Plugin.Beahat.Beahat.Current;
             _pageDialogService = pageDialogService;
 
             _beahat.PropertyChanged += servicePropertyChanged;

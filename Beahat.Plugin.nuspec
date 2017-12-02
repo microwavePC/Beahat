@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata minClientVersion="2.8.3">
 		<id>Plugin.Beahat</id>
-		<version>0.4.3</version>
+		<version>0.4.4</version>
 		<title>Beahat Plugin for Xamarin</title>
 		<authors>microwavePC</authors>
 		<owners>microwavePC</owners>
